@@ -4246,6 +4246,15 @@ static void ffp_show_version_int(FFPlayer *ffp, const char *module, unsigned ver
            (unsigned int)IJKVERSION_GET_MICRO(version));
 }
 
+void ffp_init_filter(FFPlayer *ffp) {
+    if (ffp->vfilter0) {
+        GROW_ARRAY(ffp->vfilters_list, ffp->nb_vfilters);
+        ffp->vfilters_list[ffp->nb_vfilters - 1] = ffp->vfilter0;
+        ffp->vfilters_list[ffp->is->vfilter_idx] = ffp->vfilter0;
+        ffp->vf_changed = 1;
+    }
+}
+
 int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
 {
     assert(ffp);
@@ -4292,10 +4301,7 @@ int ffp_prepare_async_l(FFPlayer *ffp, const char *file_name)
     }
 
 #if CONFIG_AVFILTER
-    if (ffp->vfilter0) {
-        GROW_ARRAY(ffp->vfilters_list, ffp->nb_vfilters);
-        ffp->vfilters_list[ffp->nb_vfilters - 1] = ffp->vfilter0;
-    }
+    ffp_init_filter(ffp);
 #endif
 
     VideoState *is = stream_open(ffp, file_name, NULL);

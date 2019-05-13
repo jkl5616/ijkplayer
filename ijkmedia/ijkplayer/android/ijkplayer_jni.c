@@ -39,6 +39,7 @@
 #include "ijksdl/android/ijksdl_android_jni.h"
 #include "ijksdl/android/ijksdl_codec_android_mediadef.h"
 #include "ijkavformat/ijkavformat.h"
+#include "../ijkplayer_internal.h"
 
 #define JNI_MODULE_PACKAGE      "tv/danmaku/ijk/media/player"
 #define JNI_CLASS_IJKPLAYER     "tv/danmaku/ijk/media/player/IjkMediaPlayer"
@@ -492,6 +493,7 @@ ijkMediaPlayer_setStreamSelected(JNIEnv *env, jobject thiz, jint stream, jboolea
         ALOGE("failed to %s %d", selected ? "select" : "deselect", stream);
         goto LABEL_RETURN;
     }
+    ijkmp_seek_to(mp, ijkmp_get_current_position(mp));
 
 LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
@@ -549,6 +551,14 @@ IjkMediaPlayer_setOption(JNIEnv *env, jobject thiz, jint category, jobject name,
     }
 
     ijkmp_set_option(mp, category, c_name, c_value);
+
+    if(!strcmp(c_name, "vf0")) {
+        char* c_value_cpy = (char*) malloc((strlen(c_value) + 1) * sizeof(char));
+        strcpy(c_value_cpy, c_value);
+        free(mp->ffplayer->vfilter0);
+        mp->ffplayer->vfilter0 = c_value_cpy;
+        ffp_init_filter(mp->ffplayer);
+    }
 
 LABEL_RETURN:
     if (c_name)
